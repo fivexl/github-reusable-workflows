@@ -27,9 +27,6 @@ jobs:
         working-directory: ${{ inputs.working-directory }}
     env:
       AWS_DEFAULT_REGION: ${{ inputs.aws-default-region }}
-    strategy:
-      matrix:
-        python-version: ["3.10"]
     steps:
       - uses: actions/checkout@v3
       - name: Set up Python ${{ inputs.python-version }}
