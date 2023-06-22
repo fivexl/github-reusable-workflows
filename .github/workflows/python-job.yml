@@ -9,6 +9,12 @@ on:
         required: false
         type: string
         default: "eu-central-1"
+      working-directory:
+        required: false
+        type: string
+      test-directory:
+        required: false
+        type: string
 
 jobs:
   build:
@@ -16,7 +22,7 @@ jobs:
     defaults:
       run:
         shell: bash
-        working-directory: src
+        working-directory: ${{ inputs.working-directory }}
     env:
       AWS_DEFAULT_REGION: ${{ inputs.aws-default-region }}
     strategy:
@@ -47,4 +53,4 @@ jobs:
         # that either start or end with "test" (or "tests"). Make sure your test 
         # files follow this naming convention. Same for test functions and methods.
         run: |
-          pytest tests/ -v
+          pytest ${{ inputs.test-directory }} -v
