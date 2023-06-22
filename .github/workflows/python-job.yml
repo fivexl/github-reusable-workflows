@@ -12,6 +12,7 @@ on:
       working-directory:
         required: false
         type: string
+        default: "./"
       test-directory:
         required: false
         type: string
