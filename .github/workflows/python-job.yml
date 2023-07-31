@@ -41,11 +41,11 @@ jobs:
       - name: Analysing the code with pylint
         continue-on-error: false    
         run: |
-          pylint $(git ls-files '*.py')
+          pylint --max-line-length=120 $(git ls-files '*.py')
       - name: Analysing the code with pep8
         continue-on-error: false      
         run: |
-          pep8 $(git ls-files '*.py')  
+          pep8 --max-line-length=120$(git ls-files '*.py')  
       - name: Test with pytest
         continue-on-error: false
         # Note: pytest will only automatically discover and run tests in files 
