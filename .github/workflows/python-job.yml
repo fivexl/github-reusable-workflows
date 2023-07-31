@@ -39,11 +39,11 @@ jobs:
           pip install -r requirements.txt
           pip install pylint pep8 pytest
       - name: Analysing the code with pylint
-        continue-on-error: true # allow failures, remove it in the future      
+        continue-on-error: false    
         run: |
           pylint $(git ls-files '*.py')
       - name: Analysing the code with pep8
-        continue-on-error: true # allow failures, remove it in the future      
+        continue-on-error: false      
         run: |
           pep8 $(git ls-files '*.py')  
       - name: Test with pytest
