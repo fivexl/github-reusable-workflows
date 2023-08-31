@@ -41,7 +41,7 @@ jobs:
       - name: Analysing the code with ruff
         continue-on-error: false
         run: |
-          ruff $(git ls-files '*.py') 
+          ruff check $(git ls-files '*.py') 
       - name: Test with pytest
         continue-on-error: false
         # Note: pytest will only automatically discover and run tests in files 
