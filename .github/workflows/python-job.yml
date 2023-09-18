@@ -16,7 +16,11 @@ on:
       test-directory:
         required: false
         type: string
-        default: "./"        
+        default: "./"
+      pytest-continue-on-error:
+        required: false
+        type: boolean
+        default: false
 
 jobs:
   build:
@@ -43,7 +47,7 @@ jobs:
         run: |
           ruff check $(git ls-files '*.py') 
       - name: Test with pytest
-        continue-on-error: false
+        continue-on-error: ${{ inputs.pytest-continue-on-error }}
         # Note: pytest will only automatically discover and run tests in files 
         # that either start or end with "test" (or "tests"). Make sure your test 
         # files follow this naming convention. Same for test functions and methods.
