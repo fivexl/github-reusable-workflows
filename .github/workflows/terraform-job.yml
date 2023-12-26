@@ -10,6 +10,22 @@ on:
         required: false
         type: string
         default: "eu-central-1"
+      tf-lint-continue-on-error:
+        required: false
+        type: boolean
+        default: false
+      terraform-fmt-continue-on-error:
+        required: false
+        type: boolean
+        default: false
+      terraform-validate-continue-on-error:
+        required: false
+        type: boolean
+        default: false
+      tfsec-continue-on-error:
+        required: false
+        type: boolean
+        default: false
       
 
 jobs:
@@ -17,6 +33,7 @@ jobs:
   tflint:
     name: TFLint
     runs-on: ubuntu-20.04
+    continue-on-error: ${{ inputs.tf-lint-continue-on-error }}
     steps:
       - uses: actions/checkout@master
       - uses: terraform-linters/setup-tflint@v3
@@ -32,6 +49,7 @@ jobs:
   fmt:
     name: fmt
     runs-on: ubuntu-20.04
+    continue-on-error: ${{ inputs.terraform-fmt-continue-on-error }}
     container:
       image: hashicorp/terraform:latest
     steps:
@@ -41,6 +59,7 @@ jobs:
   validate:
     name: validate
     runs-on: ubuntu-20.04
+    continue-on-error: ${{ inputs.terraform-validate-continue-on-error }}
     container:
       image: hashicorp/terraform:latest
     steps:
@@ -55,6 +74,7 @@ jobs:
   tfsec:
     name: TFSec
     runs-on: ubuntu-20.04
+    continue-on-error: ${{ inputs.tfsec-continue-on-error }}
     steps:
       - uses: actions/checkout@master
       - name: TFSec
