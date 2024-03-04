@@ -1,107 +1,102 @@
-name: Pre-Commit
+name: Terraform Workflow
 
 on:
   workflow_call:
-
-env:
-  TERRAFORM_DOCS_VERSION: v0.16.0
-  TFLINT_VERSION: v0.44.1
+    inputs:
+      terraform-version:
+        required: true
+        type: string
+      aws-default-region:
+        required: false
+        type: string
+        default: "eu-central-1"
+      terraform-commands-directory:
+        required: false
+        type: string
+        default: ""
+      tf-lint-continue-on-error:
+        required: false
+        type: boolean
+        default: false
+      terraform-fmt-continue-on-error:
+        required: false
+        type: boolean
+        default: false
+      terraform-validate-continue-on-error:
+        required: false
+        type: boolean
+        default: false
+      tfsec-continue-on-error:
+        required: false
+        type: boolean
+        default: false
+      
 
 jobs:
-  collectInputs:
-    name: Collect workflow inputs
-    runs-on: ubuntu-latest
-    outputs:
-      directories: ${{ steps.filtered_dirs.outputs.directories }} 
+    
+  tflint:
+    name: TFLint
+    runs-on: ubuntu-20.04
+    continue-on-error: ${{ inputs.tf-lint-continue-on-error }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-
-      - name: Get root directories
-        id: dirs
-        uses: clowdhaus/terraform-composite-actions/directories@v1.8.3
-
-      - name: Filter directories
-        id: filtered_dirs
+      - uses: actions/checkout@master
+      - uses: terraform-linters/setup-tflint@v3
+        name: Setup TFLint
+        with:
+          tflint_version: v0.46.0      
+      - name: TFLint
         run: |
-          cat > directories.py <<EOL
-          import json
+          tflint -f compact
+        env:
+          GITHUB_TOKEN: ${{ github.token }}  # https://github.com/terraform-linters/tflint/blob/master/docs/user-guide/plugins.md#avoiding-rate-limiting
 
-          def filter_directories(dirs: list[str]):
-              r = []
-              for d in dirs:
-                  if 'dumping_area' in d:
-                      continue
-                  r.append(d)
-              return json.dumps(r)
-
-          if __name__ == '__main__':
-              dirs_input = '${{ steps.dirs.outputs.directories }}'
-              print(filter_directories(dirs=json.loads(dirs_input)))
-          EOL
-
-          DIRS=$(python ./directories.py)
-          echo $DIRS
-          rm directories.py
-          echo "directories=$DIRS" >> $GITHUB_OUTPUT
-        
-
-  preCommitMinVersions:
-    name: Min TF pre-commit
-    needs: collectInputs
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        directory: ${{ fromJson(needs.collectInputs.outputs.directories) }}
+  fmt:
+    name: fmt
+    runs-on: ubuntu-20.04
+    continue-on-error: ${{ inputs.terraform-fmt-continue-on-error }}
+    container:
+      image: hashicorp/terraform:latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v3
+      - uses: actions/checkout@master
+      - run: terraform fmt --recursive -check=true
 
-      - name: Terraform min/max versions
-        id: minMax
-        uses: clowdhaus/terraform-min-max@v1.2.7
-        with:
-          directory: ${{ matrix.directory }}
-
-      - name: Pre-commit Terraform ${{ steps.minMax.outputs.minVersion }}
-        # Run only validate pre-commit check on min version supported
-        if: ${{ matrix.directory !=  '.'}}
-        uses: clowdhaus/terraform-composite-actions/pre-commit@v1.8.3
-        with:
-          terraform-version: ${{ steps.minMax.outputs.minVersion }}
-          tflint-version: ${{ env.TFLINT_VERSION }}
-          args: 'terraform_validate --color=always --show-diff-on-failure --files ${{ matrix.directory }}/*'
-
-      - name: Pre-commit Terraform ${{ steps.minMax.outputs.minVersion }}
-        # Run only validate pre-commit check on min version supported
-        if: ${{ matrix.directory ==  '.'}}
-        uses: clowdhaus/terraform-composite-actions/pre-commit@v1.8.3
-        with:
-          terraform-version: ${{ steps.minMax.outputs.minVersion }}
-          tflint-version: ${{ env.TFLINT_VERSION }}
-          args: 'terraform_validate --color=always --show-diff-on-failure --files $(ls *.tf)'
-
-  preCommitMaxVersion:
-    name: Max TF pre-commit
-    runs-on: ubuntu-latest
-    needs: collectInputs
-    strategy:
-      matrix:
-        directory: ${{ fromJson(needs.collectInputs.outputs.directories) }}
+  validate:
+    name: validate
+    runs-on: ubuntu-20.04
+    continue-on-error: ${{ inputs.terraform-validate-continue-on-error }}
+    container:
+      image: hashicorp/terraform:latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v3
+      - uses: actions/checkout@master
+      - name: terraform validate
+        run: |
+          dir_option=""
+          if [ -n "${{ inputs.terraform-commands-directory }}" ]; then
+            dir_option="-chdir=${{ inputs.terraform-commands-directory }}"
+          fi
+          terraform $dir_option init
+          terraform $dir_option validate -no-color
+        env:
+          AWS_DEFAULT_REGION: ${{ inputs.aws-default-region }}
 
-      - name: Terraform min/max versions
-        id: minMax
-        uses: clowdhaus/terraform-min-max@v1.2.7
+  tfsec:
+    name: TFSec
+    runs-on: ubuntu-20.04
+    continue-on-error: ${{ inputs.tfsec-continue-on-error }}
+    steps:
+      - uses: actions/checkout@master
+      - name: TFSec
+        uses: triat/terraform-security-scan@v3.1.0
         with:
-          directory: ${{ matrix.directory }}
-
-      - name: Pre-commit Terraform ${{ steps.minMax.outputs.maxVersion }}
-        uses: clowdhaus/terraform-composite-actions/pre-commit@v1.8.3
-        with:
-          terraform-version: ${{ steps.minMax.outputs.maxVersion }}
-          tflint-version: ${{ env.TFLINT_VERSION }}
-          terraform-docs-version: ${{ env.TERRAFORM_DOCS_VERSION }}
-          install-tfsec: true
+          tfsec_actions_comment: false
+  
+  # tfdocs:
+  #   name: TFDocs
+  #   runs-on: ubuntu-20.04
+  #   steps:
+  #     - uses: actions/checkout@master
+  #     - name: TFDocs
+  #       uses: terraform-docs/gh-actions@v1.0.0
+  #       with:
+  #         working-dir: ./
+  #         fail-on-diff: true
