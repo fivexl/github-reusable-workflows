@@ -39,8 +39,8 @@ jobs:
     runs-on: ubuntu-20.04
     continue-on-error: ${{ inputs.tf-lint-continue-on-error }}
     steps:
-      - uses: actions/checkout@master
-      - uses: terraform-linters/setup-tflint@v3
+      - uses: actions/checkout@v4.2.1
+      - uses: terraform-linters/setup-tflint@v4
         name: Setup TFLint
         with:
           tflint_version: v0.46.0      
@@ -57,7 +57,7 @@ jobs:
     container:
       image: hashicorp/terraform:latest
     steps:
-      - uses: actions/checkout@master
+      - uses: actions/checkout@v4.2.1
       - run: terraform fmt --recursive -check=true
 
   validate:
@@ -67,7 +67,7 @@ jobs:
     container:
       image: hashicorp/terraform:latest
     steps:
-      - uses: actions/checkout@master
+      - uses: actions/checkout@v4.2.1
       - name: terraform validate
         run: |
           dir_option=""
@@ -84,9 +84,9 @@ jobs:
     runs-on: ubuntu-20.04
     continue-on-error: ${{ inputs.tfsec-continue-on-error }}
     steps:
-      - uses: actions/checkout@master
+      - uses: actions/checkout@v4.2.1
       - name: TFSec
-        uses: triat/terraform-security-scan@v3.1.0
+        uses: triat/terraform-security-scan@v3.2.0
         with:
           tfsec_actions_comment: false
   
