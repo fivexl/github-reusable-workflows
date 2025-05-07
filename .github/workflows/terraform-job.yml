@@ -36,7 +36,7 @@ jobs:
     
   tflint:
     name: TFLint
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     continue-on-error: ${{ inputs.tf-lint-continue-on-error }}
     steps:
       - uses: actions/checkout@v4.2.1
@@ -52,7 +52,7 @@ jobs:
 
   fmt:
     name: fmt
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     continue-on-error: ${{ inputs.terraform-fmt-continue-on-error }}
     container:
       image: hashicorp/terraform:latest
@@ -62,7 +62,7 @@ jobs:
 
   validate:
     name: validate
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     continue-on-error: ${{ inputs.terraform-validate-continue-on-error }}
     container:
       image: hashicorp/terraform:latest
@@ -81,7 +81,7 @@ jobs:
 
   tfsec:
     name: TFSec
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     continue-on-error: ${{ inputs.tfsec-continue-on-error }}
     steps:
       - uses: actions/checkout@v4.2.1
@@ -92,7 +92,7 @@ jobs:
   
   # tfdocs:
   #   name: TFDocs
-  #   runs-on: ubuntu-20.04
+  #   runs-on: ubuntu-22.04
   #   steps:
   #     - uses: actions/checkout@master
   #     - name: TFDocs
